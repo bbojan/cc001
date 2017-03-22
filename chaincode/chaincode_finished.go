@@ -41,6 +41,8 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 		return t.Init(stub, "init", args)
 	} else if function == "write" {
 		return t.write(stub, args)
+	} else if function == "append" {
+		return t.append(stub, args)
 	}
 	fmt.Println("invoke did not find func: " + function)
 
@@ -76,6 +78,38 @@ func (t *SimpleChaincode) write(stub shim.ChaincodeStubInterface, args []string)
 	if err != nil {
 		return nil, err
 	}
+	return nil, nil
+}
+
+// append - invoke function to append value to key/value pair
+func (t *SimpleChaincode) append(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	var key, value string
+	var err error
+	fmt.Println("running append()")
+
+	if len(args) != 2 {
+		return nil, errors.New("Incorrect number of arguments. Expecting 2. name of the key and value to append")
+	}
+
+	key = args[0] //rename for funsies
+	value = args[1]
+
+	oldVal, err2 := stub.GetState(key)
+	if err2 == nil {
+		oldValue = string(oldVal)
+		newValue = oldValue + "|" + value
+
+		err = stub.PutState(key, []byte(newValue)) //write the variable into the chaincode state
+		if err != nil {
+			return nil, err
+		}
+	}else{
+		err = stub.PutState(key, []byte(value)) //write the variable into the chaincode state
+		if err != nil {
+			return nil, err
+		}	
+	}
+
 	return nil, nil
 }
 
