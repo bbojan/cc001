@@ -94,6 +94,9 @@ func (t *SimpleChaincode) append(stub shim.ChaincodeStubInterface, args []string
 	key = args[0] //rename for funsies
 	value = args[1]
 
+	var oldValue, newValue string
+	var err2 error
+
 	oldVal, err2 := stub.GetState(key)
 	if err2 == nil {
 		oldValue = string(oldVal)
