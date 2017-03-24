@@ -158,9 +158,15 @@ func (t *SimpleChaincode) sync(stub shim.ChaincodeStubInterface, args []string) 
 	var commands []string
 	var err error
 
-	count, err = stub.GetState(countKey)
+	countBytes, err := stub.GetState(countKey)
 	if err != nil {
 		count = 0
+	}else{
+		var countString = string(countBytes)
+		count, err = strconv.ParseUint(countString, 10, 64)
+		if err != nil{
+			count = 0
+		}
 	}	
 
 	commands = strings.Split(values, ",")
@@ -198,16 +204,19 @@ func (t *SimpleChaincode) sync(stub shim.ChaincodeStubInterface, args []string) 
 
 	for i := position; i < countIndex; i++ {
 		key := commandKeyPrefix + string(i)
-		command, err := stub.GetState(key)
+		commandBytes, err := stub.GetState(key)
 		if err != nil {
 			fmt.Println("err stub.GetState(key)")		
-		}else if command != ""{
-			if i == position {
-				result = result + command;
-			}else if command != ""{				
-				result = result + "," + command
-			}
-		}	
+		}else {
+			command := string(commandBytes)
+			if command != ""{
+				if i == position {
+					result = result + command;
+				}else if command != ""{				
+					result = result + "," + command
+				}
+			}	
+		}
 	}
 
 	result = result + "],position:" + string(countIndex) + "}"
