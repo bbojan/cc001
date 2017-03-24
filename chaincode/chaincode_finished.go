@@ -3,6 +3,8 @@ package main
 import (
 	"errors"
 	"fmt"
+	"strings"
+	"strconv"
 
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 )
@@ -43,6 +45,8 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 		return t.write(stub, args)
 	} else if function == "append" {
 		return t.append(stub, args)
+	} else if function == "sync" {
+		return t.sync(stub, args)
 	}
 	fmt.Println("invoke did not find func: " + function)
 
@@ -81,6 +85,25 @@ func (t *SimpleChaincode) write(stub shim.ChaincodeStubInterface, args []string)
 	return nil, nil
 }
 
+// read - query function to read key/value pair
+func (t *SimpleChaincode) read(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	var key, jsonResp string
+	var err error
+
+	if len(args) != 1 {
+		return nil, errors.New("Incorrect number of arguments. Expecting name of the key to query")
+	}
+
+	key = args[0]
+	valAsbytes, err := stub.GetState(key)
+	if err != nil {
+		jsonResp = "{\"Error\":\"Failed to get state for " + key + "\"}"
+		return nil, errors.New(jsonResp)
+	}
+
+	return valAsbytes, nil
+}
+
 // append - invoke function to append value to key/value pair
 func (t *SimpleChaincode) append(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	var key, value string
@@ -116,21 +139,81 @@ func (t *SimpleChaincode) append(stub shim.ChaincodeStubInterface, args []string
 	return nil, nil
 }
 
-// read - query function to read key/value pair
-func (t *SimpleChaincode) read(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
-	var key, jsonResp string
+// sync - invoke function to sync values
+func (t *SimpleChaincode) sync(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	fmt.Println("running sync()")
+
+	if len(args) != 4 {
+		return nil, errors.New("Incorrect number of arguments. Expecting 4")
+	}
+
+	var countKey, commandKeyPrefix, pozition, values string
+
+	countKey = args[0] 
+	commandKeyPrefix = args[1]
+	pozition = args[1]
+	values = args[3]
+	
+	var count, countIndex uint64
+	var commands []string
 	var err error
 
-	if len(args) != 1 {
-		return nil, errors.New("Incorrect number of arguments. Expecting name of the key to query")
-	}
-
-	key = args[0]
-	valAsbytes, err := stub.GetState(key)
+	count, err = stub.GetState(countKey)
 	if err != nil {
-		jsonResp = "{\"Error\":\"Failed to get state for " + key + "\"}"
-		return nil, errors.New(jsonResp)
+		count = 0
+	}	
+
+	values = strings.Replace(values, "{commands:[", "", 1)
+	values = strings.Replace(values, "],end:42}", "", 1)
+
+	commands = strings.Split(values, ",")
+
+	countIndex = count
+    for i, command := range commands {
+        if command != "" {
+            //
+			key := commandKeyPrefix + string(countIndex)
+			err = stub.PutState(key, []byte(command)) 
+			if err != nil {
+				fmt.Println("err stub.PutState(key, []byte(command))")			
+			}	
+			//
+			countIndex = countIndex + 1
+        }
+    }
+
+	err = stub.PutState(countKey, []byte(string(countIndex))) 
+	if err != nil {
+		return nil, err
+	}	
+
+	var position, outIndex uint64
+	var result string = ""
+
+	position, err = strconv.ParseUint(pozition, 10, 64)
+	if err != nil {
+		position = 0
 	}
 
-	return valAsbytes, nil
+	outIndex = position
+
+	result = "{commands:["
+
+	for i := position; i < countIndex; i++ {
+		key := commandKeyPrefix + string(i)
+		command, err := stub.GetState(key)
+		if err != nil {
+			fmt.Println("err stub.GetState(key)")		
+		}else if command != ""{
+			if i == position {
+				result = result + command;
+			}else if command != ""{				
+				result = result + "," + command
+			}
+		}	
+	}
+
+	result = result + "],position:" + string(countIndex) + "}"
+
+	return []byte(result), nil
 }
