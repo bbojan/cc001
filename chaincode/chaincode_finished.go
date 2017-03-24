@@ -163,9 +163,6 @@ func (t *SimpleChaincode) sync(stub shim.ChaincodeStubInterface, args []string) 
 		count = 0
 	}	
 
-	values = strings.Replace(values, "{commands:[", "", 1)
-	values = strings.Replace(values, "],end:42}", "", 1)
-
 	commands = strings.Split(values, ",")
 
 	countIndex = count
