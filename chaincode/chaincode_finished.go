@@ -241,7 +241,7 @@ func (t *SimpleChaincode) pull(stub shim.ChaincodeStubInterface, args []string) 
 
 	outIndex = position
 
-	result = '{"commands":['
+	result = "{\"commands\":["
 
 	for i := position; i < count; i++ {
 		var key = commandKeyPrefix + string(i)
@@ -261,7 +261,7 @@ func (t *SimpleChaincode) pull(stub shim.ChaincodeStubInterface, args []string) 
 		}
 	}
 
-	result = result + '],"position":' + strconv.FormatUint(count, 10) + "}"
+	result = result + "],\"position\":" + strconv.FormatUint(count, 10) + "}"
 
 	return []byte(result), nil
 }
