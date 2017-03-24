@@ -187,7 +187,7 @@ func (t *SimpleChaincode) push(stub shim.ChaincodeStubInterface, args []string) 
         }
     }
 
-	err = stub.PutState(countKey, []byte(strconv.FormatUint(countIndex, 10)) 
+	err = stub.PutState(countKey, []byte(strconv.FormatUint(countIndex, 10))) 
 	if err != nil {
 		return nil, err
 	}	
