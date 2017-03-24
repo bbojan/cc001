@@ -214,12 +214,16 @@ func (t *SimpleChaincode) pull(stub shim.ChaincodeStubInterface, args []string) 
 	countBytes, err := stub.GetState(countKey)
 	if err != nil {
 		count = 0
+		return nil, errors.New("count = 0, err != nil")
 	}else{
 		var countString = string(countBytes)
 		count, err = strconv.ParseUint(countString, 10, 64)
 		if err != nil{
 			count = 0
-		}
+			return nil, errors.New("count = 00, err != nil")
+		}else{
+			return nil, errors.New("err == nil : " + string(count))
+		}		
 	}	
 
 	var position, outIndex uint64
