@@ -157,9 +157,10 @@ func (t *SimpleChaincode) push(stub shim.ChaincodeStubInterface, args []string) 
 	
 	var count, countIndex uint64
 	var commands []string
+	var countBytes []byte
 	var err error
 
-	countBytes, err := stub.GetState(countKey)
+	countBytes, err = stub.GetState(countKey)
 	if err != nil {
 		count = 0
 	}else{
@@ -176,7 +177,7 @@ func (t *SimpleChaincode) push(stub shim.ChaincodeStubInterface, args []string) 
     for _, command := range commands {
         if command != "" {
             //
-			key := commandKeyPrefix + string(countIndex)
+			var key = commandKeyPrefix + string(countIndex)
 			err = stub.PutState(key, []byte(command)) 
 			if err != nil {
 				fmt.Println("err stub.PutState(key, []byte(command))")			
@@ -209,20 +210,21 @@ func (t *SimpleChaincode) pull(stub shim.ChaincodeStubInterface, args []string) 
 	pozition = args[2]
 	
 	var count uint64
+	var countBytes []byte
 	var err error
 
-	countBytes, err := stub.GetState(countKey)
+	countBytes, err = stub.GetState(countKey)
 	if err != nil {
 		count = 0
-		return nil, errors.New("count = 0, err != nil")
+		//return nil, errors.New("count = 0, err != nil")
 	}else{
 		var countString = string(countBytes)
 		count, err = strconv.ParseUint(countString, 10, 64)
 		if err != nil{
 			count = 0
-			return nil, errors.New("count = 00, err != nil")
+			//return nil, errors.New("count = 00, err != nil")
 		}else{
-			return nil, errors.New("err == nil : " + string(count))
+			//return nil, errors.New("err == nil : " + string(count))
 		}		
 	}	
 
@@ -234,17 +236,20 @@ func (t *SimpleChaincode) pull(stub shim.ChaincodeStubInterface, args []string) 
 		position = 0
 	}
 
+	var commandBytes []byte
+	var command string
+
 	outIndex = position
 
 	result = "{commands:["
 
 	for i := position; i < count; i++ {
-		key := commandKeyPrefix + string(i)
-		commandBytes, err := stub.GetState(key)
+		var key = commandKeyPrefix + string(i)
+		commandBytes, err = stub.GetState(key)
 		if err != nil {
 			fmt.Println("err stub.GetState(key)")		
 		}else {
-			command := string(commandBytes)
+			command = string(commandBytes)
 			if command != ""{
 				if i == position {
 					result = result + command;
