@@ -172,7 +172,7 @@ func (t *SimpleChaincode) sync(stub shim.ChaincodeStubInterface, args []string) 
 	commands = strings.Split(values, ",")
 
 	countIndex = count
-    for i, command := range commands {
+    for _, command := range commands {
         if command != "" {
             //
 			key := commandKeyPrefix + string(countIndex)
@@ -215,6 +215,7 @@ func (t *SimpleChaincode) sync(stub shim.ChaincodeStubInterface, args []string) 
 				}else if command != ""{				
 					result = result + "," + command
 				}
+				outIndex = outIndex + 1
 			}	
 		}
 	}
