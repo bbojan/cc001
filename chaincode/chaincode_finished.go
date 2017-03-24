@@ -45,8 +45,8 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 		return t.write(stub, args)
 	} else if function == "append" {
 		return t.append(stub, args)
-	} else if function == "sync" {
-		return t.sync(stub, args)
+	} else if function == "push" {
+		return t.push(stub, args)
 	}
 	fmt.Println("invoke did not find func: " + function)
 
@@ -60,6 +60,8 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 	// Handle different functions
 	if function == "read" { //read a variable
 		return t.read(stub, args)
+	}else if function == "pull" { 
+		return t.pull(stub, args)
 	}
 	fmt.Println("query did not find func: " + function)
 
@@ -139,20 +141,19 @@ func (t *SimpleChaincode) append(stub shim.ChaincodeStubInterface, args []string
 	return nil, nil
 }
 
-// sync - invoke function to sync values
-func (t *SimpleChaincode) sync(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
-	fmt.Println("running sync()")
+// push - invoke function to push values
+func (t *SimpleChaincode) push(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	fmt.Println("running push()")
 
-	if len(args) != 4 {
-		return nil, errors.New("Incorrect number of arguments. Expecting 4")
+	if len(args) != 3 {
+		return nil, errors.New("Incorrect number of arguments. Expecting 3")
 	}
 
-	var countKey, commandKeyPrefix, pozition, values string
+	var countKey, commandKeyPrefix, values string
 
 	countKey = args[0] 
 	commandKeyPrefix = args[1]
-	pozition = args[1]
-	values = args[3]
+	values = args[2]
 	
 	var count, countIndex uint64
 	var commands []string
@@ -190,6 +191,37 @@ func (t *SimpleChaincode) sync(stub shim.ChaincodeStubInterface, args []string) 
 		return nil, err
 	}	
 
+	return nil, nil
+}
+
+// pull - invoke function to pull values
+func (t *SimpleChaincode) pull(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	fmt.Println("running pull()")
+
+	if len(args) != 3 {
+		return nil, errors.New("Incorrect number of arguments. Expecting 3")
+	}
+
+	var countKey, commandKeyPrefix, pozition string
+
+	countKey = args[0] 
+	commandKeyPrefix = args[1]
+	pozition = args[2]
+	
+	var count uint64
+	var err error
+
+	countBytes, err := stub.GetState(countKey)
+	if err != nil {
+		count = 0
+	}else{
+		var countString = string(countBytes)
+		count, err = strconv.ParseUint(countString, 10, 64)
+		if err != nil{
+			count = 0
+		}
+	}	
+
 	var position, outIndex uint64
 	var result string = ""
 
@@ -202,7 +234,7 @@ func (t *SimpleChaincode) sync(stub shim.ChaincodeStubInterface, args []string) 
 
 	result = "{commands:["
 
-	for i := position; i < countIndex; i++ {
+	for i := position; i < count; i++ {
 		key := commandKeyPrefix + string(i)
 		commandBytes, err := stub.GetState(key)
 		if err != nil {
@@ -220,7 +252,7 @@ func (t *SimpleChaincode) sync(stub shim.ChaincodeStubInterface, args []string) 
 		}
 	}
 
-	result = result + "],position:" + string(countIndex) + "}"
+	result = result + "],position:" + string(count) + "}"
 
 	return []byte(result), nil
 }
