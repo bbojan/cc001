@@ -178,7 +178,7 @@ func (t *SimpleChaincode) push(stub shim.ChaincodeStubInterface, args []string) 
     for _, command := range commands {
         if command != "" {
             //
-			var key = commandKeyPrefix + string(countIndex)
+			var key = commandKeyPrefix + strconv.FormatUint(countIndex, 10)
 			err = stub.PutState(key, []byte(command)) 
 			if err != nil {
 				fmt.Println("err stub.PutState(key, []byte(command))")			
@@ -225,7 +225,7 @@ func (t *SimpleChaincode) pull(stub shim.ChaincodeStubInterface, args []string) 
 			count = 0
 			//return nil, errors.New("count = 00, err != nil")
 		}else{
-			//return nil, errors.New("err == nil : " + string(count))
+			//return nil, errors.New("err == nil : " + strconv.FormatUint(count, 10))
 		}		
 	}	
 
@@ -245,7 +245,7 @@ func (t *SimpleChaincode) pull(stub shim.ChaincodeStubInterface, args []string) 
 	result = "{\"commands\":["
 
 	for i := position; i < count; i++ {
-		var key = commandKeyPrefix + string(i)
+		var key = commandKeyPrefix + strconv.FormatUint(i, 10)
 		commandBytes, err = stub.GetState(key)
 		if err != nil {
 			fmt.Println("err stub.GetState(key)")		
