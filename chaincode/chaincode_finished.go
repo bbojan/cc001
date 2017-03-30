@@ -145,15 +145,16 @@ func (t *SimpleChaincode) append(stub shim.ChaincodeStubInterface, args []string
 func (t *SimpleChaincode) push(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	fmt.Println("running push()")
 
-	if len(args) != 3 {
+	if len(args) != 4 {
 		return nil, errors.New("Incorrect number of arguments. Expecting 3")
 	}
 
-	var countKey, commandKeyPrefix, values string
+	var countKey, commandKeyPrefix, values, separator string
 
 	countKey = args[0] 
 	commandKeyPrefix = args[1]
 	values = args[2]
+	separator = args[3]
 	
 	var count, countIndex uint64
 	var commands []string
@@ -171,7 +172,7 @@ func (t *SimpleChaincode) push(stub shim.ChaincodeStubInterface, args []string) 
 		}
 	}	
 
-	commands = strings.Split(values, ",")
+	commands = strings.Split(values, separator)
 
 	countIndex = count
     for _, command := range commands {
